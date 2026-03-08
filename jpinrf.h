@@ -44,17 +44,6 @@ typedef enum {
 } pld_type_enum ;
 
 #define MAXPAYLOADSIZE 32
-/* #define CHBUFSIZE (MAXPAYLOADSIZE - 2 * sizeof(USHORT) - 2 * sizeof(BYTE) - 1)
-typedef struct  {
-    USHORT counter;
-    USHORT range;
-    BYTE   status;
-    BYTE   padding1;
-    char ch[CHBUFSIZE+1];
-} PAYLOAD;
-extern PAYLOAD payload;
- */
- 
  
 typedef struct {
     USHORT counter;
@@ -64,7 +53,7 @@ typedef struct {
 
 typedef struct {
 	PLDHEADER hdr;
-	BYTE data[MAXPAYLOADSIZE - sizeof(PLDHEADER)];
+	BYTE data[MAXPAYLOADSIZE - sizeof(PLDHEADER)-1];
 } TXPAYLOAD;
 
 typedef struct {
@@ -72,6 +61,11 @@ typedef struct {
    USHORT ack_counter;
    BYTE   cmd;
 } ACKPAYLOAD;
+
+typedef struct {
+   PLDHEADER hdr;
+   char msg[MAXPAYLOADSIZE-sizeof(PLDHEADER)];
+} PRTPAYLOAD;
 
 
 typedef struct {
