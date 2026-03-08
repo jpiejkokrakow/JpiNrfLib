@@ -1,0 +1,84 @@
+#ifndef __JPI_NRF_H__
+#define __JPI_NRF_H__
+
+#include <Arduino.h>
+#include <SPI.h>
+#include <RF24.h>
+
+typedef uint8_t BYTE;
+typedef uint16_t USHORT;
+typedef uint32_t UINT;
+typedef unsigned long ULONG;
+
+#define STOP  while(1)
+
+
+#define DEBUG_CODE 1
+#ifdef DEBUG_CODE 
+#define SP(str) Serial.print(str)
+#define SPV(val, base) Serial.print(val, base)
+#define SPLN(str) Serial.println(str)
+#else 
+#define SP(str) 
+#define SPV(val, base) 
+#define SPLN(str) 
+#endif
+
+
+const rf24_pa_dbm_e nrf_power = RF24_PA_MIN;
+const bool nrf_auto_ack = true;
+const bool nrf_dynamic_payload = true;
+const bool nrf_ack_payload = true;
+const BYTE nrf_channel = 37;
+const rf24_datarate_e nrf_datarate = RF24_1MBPS; 
+
+const uint64_t nrf_addr_telemetry = 0xF0F0F0F0E1LL;
+
+#define MAXPAYLOADSIZE 32
+#define CHBUFSIZE (MAXPAYLOADSIZE - 2 * sizeof(USHORT) - 2 * sizeof(BYTE) - 1)
+typedef struct  {
+    USHORT counter;
+    USHORT range;
+    BYTE   status;
+    BYTE   padding1;
+    char ch[CHBUFSIZE+1];
+} PAYLOAD;
+extern PAYLOAD payload;
+
+typedef struct {
+    USHORT counter;
+	BYTE pld_type;
+} PLDHEADER;
+
+typedef struct {
+   PLDHEADER hdr;
+   USHORT ack_counter;
+   BYTE   cmd;
+} ACKPAYLOAD;
+
+
+typedef struct {
+	USHORT range;
+	BYTE   status;
+	BYTE   padding1;
+} LOX_MEASURE;
+
+#define MAX_LOX_MEASURES 7
+typedef struct  {
+    USHORT counter;
+	BYTE pld_type;
+	BYTE nsensors;
+	LOX_MEASURE lm[MAX_LOX_MEASURES];
+} LOXPAYLOAD;
+
+extern LOXPAYLOAD loxpayload;
+
+#define CE_PIN 4
+#define CSN_PIN 5
+extern RF24 radio;
+
+
+bool nrf_configure(RF24& radio);
+
+
+#endif  // __JPI_NRF_H__
