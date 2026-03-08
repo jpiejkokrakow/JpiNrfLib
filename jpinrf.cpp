@@ -1,6 +1,6 @@
 #include <jpinrf.h>
 
-PAYLOAD payload;
+TXPAYLOAD txpayload;
 RF24 radio(CE_PIN, CSN_PIN);
 
 

@@ -34,8 +34,17 @@ const rf24_datarate_e nrf_datarate = RF24_1MBPS;
 
 const uint64_t nrf_addr_telemetry = 0xF0F0F0F0E1LL;
 
+
+typedef enum {
+	PLDT_UKN = 0,
+	PLDT_ACK = 1,
+	PLDT_LOX = 2,
+	PLDT_DRV = 3,
+	PLDT_PRT = 4
+} pld_type_enum ;
+
 #define MAXPAYLOADSIZE 32
-#define CHBUFSIZE (MAXPAYLOADSIZE - 2 * sizeof(USHORT) - 2 * sizeof(BYTE) - 1)
+/* #define CHBUFSIZE (MAXPAYLOADSIZE - 2 * sizeof(USHORT) - 2 * sizeof(BYTE) - 1)
 typedef struct  {
     USHORT counter;
     USHORT range;
@@ -44,11 +53,19 @@ typedef struct  {
     char ch[CHBUFSIZE+1];
 } PAYLOAD;
 extern PAYLOAD payload;
-
+ */
+ 
+ 
 typedef struct {
     USHORT counter;
 	BYTE pld_type;
+	BYTE pld_len;
 } PLDHEADER;
+
+typedef struct {
+	PLDHEADER hdr;
+	BYTE data[MAXPAYLOADSIZE - sizeof(PLDHEADER)];
+} TXPAYLOAD;
 
 typedef struct {
    PLDHEADER hdr;
@@ -63,15 +80,15 @@ typedef struct {
 	BYTE   padding1;
 } LOX_MEASURE;
 
-#define MAX_LOX_MEASURES 7
+#define MAX_LOX_MEASURES 6
 typedef struct  {
-    USHORT counter;
-	BYTE pld_type;
+	PLDHEADER hdr;
 	BYTE nsensors;
 	LOX_MEASURE lm[MAX_LOX_MEASURES];
 } LOXPAYLOAD;
 
-extern LOXPAYLOAD loxpayload;
+//extern LOXPAYLOAD loxpayload;
+extern TXPAYLOAD txpayload;
 
 #define CE_PIN 4
 #define CSN_PIN 5
