@@ -35,19 +35,19 @@ const rf24_datarate_e nrf_datarate = RF24_1MBPS;
 const uint64_t nrf_addr_telemetry = 0xF0F0F0F0E1LL;
 
 
-typedef enum {
-	PLDT_UKN = 0,
+typedef enum _pld_type_enum : uint8_t {
+	PLDT_NON = 0,
 	PLDT_ACK = 1,
 	PLDT_LOX = 2,
 	PLDT_DRV = 3,
 	PLDT_PRT = 4
-} pld_type_enum ;
+} pld_type_e;
 
 #define MAXPAYLOADSIZE 32
  
 typedef struct {
     USHORT counter;
-	BYTE pld_type;
+	pld_type_e pld_type;
 	BYTE pld_len;
 } PLDHEADER;
 
