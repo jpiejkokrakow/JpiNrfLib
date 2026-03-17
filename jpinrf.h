@@ -89,6 +89,7 @@ extern TXPAYLOAD txpayload;
 extern RF24 radio;
 
 
+char *getRangeStatusString(BYTE rangeStatus);
 bool nrf_configure(RF24& radio);
 
 
