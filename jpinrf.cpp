@@ -16,6 +16,27 @@ char *getRangeStatusString(BYTE rangeStatus) {
 }
 
 
+char *bootReasonStrings[] {
+	"UNKNOWN",
+    "POWERON",    //!< Reset due to power-on event
+    "EXT",        //!< Reset by external pin (not applicable for ESP32)
+    "SW",         //!< Software reset via esp_restart
+    "PANIC",      //!< Software reset due to exception/panic
+    "INT_WDT",    //!< Reset (software or hardware) due to interrupt watchdog
+    "TASK_WDT",   //!< Reset due to task watchdog
+    "WDT",        //!< Reset due to other watchdogs
+    "DEEPSLEEP",  //!< Reset after exiting deep sleep mode
+    "BROWNOUT",   //!< Brownout reset (software or hardware)
+    "SDIO",       //!< Reset over SDIO
+	
+};
+
+char *getBootReasonString(esp_reset_reason_t reason) {
+	if(reason > ESP_RST_SDIO) 
+		reason = ESP_RST_UNKNOWN;
+	return bootReasonStrings[reason];
+}
+
 
 bool nrf_configure(RF24& radio) {
 	
@@ -39,4 +60,67 @@ bool nrf_configure(RF24& radio) {
 		radio.disableAckPayload();
 	}
 	return true;
+}
+
+void PrepareQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks) {
+
+  Serial.print(F("sizeof(PLDHEADER) = ")); Serial.println(sizeof(PLDHEADER));
+  Serial.print(F("sizeof(LOX_MEASURE) = ")); Serial.println(sizeof(LOX_MEASURE));
+  Serial.print(F("sizeof(LOXPAYLOAD) = ")); Serial.println(sizeof(LOXPAYLOAD));
+  Serial.print(F("sizeof(TXPAYLOAD) = ")); Serial.println(sizeof(TXPAYLOAD));
+  Serial.print(F("sizeof(PRTPAYLOAD) = ")); Serial.println(sizeof(PRTPAYLOAD));
+  Serial.print(F("sizeof(ACKPAYLOAD) = ")); Serial.println(sizeof(ACKPAYLOAD));
+
+  for(queue_desc_t *pqd = queues; pqd->name != NULL; pqd++) {
+    QueueHandle_t qh = xQueueCreate(pqd->qu_size, pqd->el_size); 
+    if(qh == NULL) {
+      Serial.print(F("!!! Failed to create queue: "));
+      Serial.println(pqd->name);
+      STOP;
+    }
+    pqd->handle = qh;
+  }
+
+  for (task_desc_t *pt = tasks; pt->task_func != NULL; pt++) {
+      BaseType_t res = xTaskCreatePinnedToCore(
+        pt->task_func,
+        pt->name,
+        pt->stack_size,
+        pt,
+        pt->priority,
+        &pt->task_handle, 
+        pt->coreid
+      );
+      if( res != pdPASS) {
+        Serial.print(F("!!! Failed to create task: "));
+        Serial.println(pt->name);
+        STOP;
+      } else {
+        Serial.print(F("Task created: "));
+        Serial.println(pt->name);
+      }
+  }
+}
+
+bool dispatch_payload(queue_desc_t *queues, TXPAYLOAD *p, BYTE len) {
+  pld_type_e pld_type = p->hdr.pld_type;
+
+  for(queue_desc_t* pqd = queues; pqd->name != NULL; pqd++) {
+    for(pld_type_e *ppt = pqd->pldtypes; *ppt != PLDT_NON; ppt++) {
+      if(*ppt == pld_type && pqd->handle != NULL) {
+          if (xQueueSend(pqd->handle, p, portMAX_DELAY) != pdPASS) {
+              Serial.print(F("!!! DISPATCHER: Failed to store data into queue:"));
+              Serial.println(pqd->name);
+          }
+          return true;
+      }
+    }
+  }
+  if( p->hdr.pld_type == PLDT_ACK) {
+    ACKPAYLOAD *ackp = (ACKPAYLOAD*)p;
+    SP("    counter = "); SP(ackp->hdr.counter); SP(", ack_counter = "); SP(ackp->ack_counter); SPLN("");
+    SP("    cmmd: "); Serial.write(ackp->cmd); SPLN("");
+    return true;
+  } 
+  return false;
 }

@@ -41,6 +41,7 @@ typedef enum _pld_type_enum : uint8_t {
 	PLDT_LOX = 2,
 	PLDT_DRV = 3,
 	PLDT_PRT = 4
+	
 } pld_type_e;
 
 #define MAXPAYLOADSIZE 32
@@ -81,7 +82,29 @@ typedef struct  {
 	LOX_MEASURE lm[MAX_LOX_MEASURES];
 } LOXPAYLOAD;
 
-//extern LOXPAYLOAD loxpayload;
+
+const int max_queue_pld_types = 6;
+typedef struct  {
+  char *name;
+  QueueHandle_t handle;
+  BYTE    qu_size;
+  BYTE    el_size;
+  pld_type_e pldtypes[max_queue_pld_types];
+} queue_desc_t;
+
+typedef struct {
+  TaskFunction_t task_func;
+  TaskHandle_t task_handle;
+  char *name;
+  uint32_t stack_size;
+  USHORT priority;
+  USHORT coreid;
+  queue_desc_t *in_q_desc;
+  queue_desc_t *out_q_desc;
+}  task_desc_t;
+
+
+
 extern TXPAYLOAD txpayload;
 
 #define CE_PIN 4
@@ -89,8 +112,14 @@ extern TXPAYLOAD txpayload;
 extern RF24 radio;
 
 
+char *getBootReasonString(esp_reset_reason_t reason);
 char *getRangeStatusString(BYTE rangeStatus);
 bool nrf_configure(RF24& radio);
+
+void PrepareQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks);
+bool dispatch_payload(queue_desc_t *queues, TXPAYLOAD *p, BYTE len);
+
+
 
 
 #endif  // __JPI_NRF_H__
