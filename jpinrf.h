@@ -92,8 +92,13 @@ typedef struct  {
   pld_type_e pldtypes[max_queue_pld_types];
 } queue_desc_t;
 
-typedef struct {
+
+struct task_desc_t;
+typedef bool (*InitFunction_t)(task_desc_t *);
+
+struct task_desc_t {
   TaskFunction_t task_func;
+  InitFunction_t init_func;
   TaskHandle_t task_handle;
   char *name;
   uint32_t stack_size;
@@ -101,7 +106,7 @@ typedef struct {
   USHORT coreid;
   queue_desc_t *in_q_desc;
   queue_desc_t *out_q_desc;
-}  task_desc_t;
+};
 
 
 
@@ -116,7 +121,7 @@ char *getBootReasonString(esp_reset_reason_t reason);
 char *getRangeStatusString(BYTE rangeStatus);
 bool nrf_configure(RF24& radio);
 
-void PrepareQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks);
+void SetupQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks);
 bool dispatch_payload(queue_desc_t *queues, TXPAYLOAD *p, BYTE len);
 
 

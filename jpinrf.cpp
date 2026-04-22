@@ -62,14 +62,21 @@ bool nrf_configure(RF24& radio) {
 	return true;
 }
 
-void PrepareQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks) {
+void task_func_stub(void *pvParams) {
+	task_desc_t *pt = (task_desc_t*)pvParams;
+	pt->task_func(pt);
+}
 
+void SetupQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks) {
+
+  Serial.println("/****************");
   Serial.print(F("sizeof(PLDHEADER) = ")); Serial.println(sizeof(PLDHEADER));
   Serial.print(F("sizeof(LOX_MEASURE) = ")); Serial.println(sizeof(LOX_MEASURE));
   Serial.print(F("sizeof(LOXPAYLOAD) = ")); Serial.println(sizeof(LOXPAYLOAD));
   Serial.print(F("sizeof(TXPAYLOAD) = ")); Serial.println(sizeof(TXPAYLOAD));
   Serial.print(F("sizeof(PRTPAYLOAD) = ")); Serial.println(sizeof(PRTPAYLOAD));
   Serial.print(F("sizeof(ACKPAYLOAD) = ")); Serial.println(sizeof(ACKPAYLOAD));
+  Serial.println("****************/");
 
   for(queue_desc_t *pqd = queues; pqd->name != NULL; pqd++) {
     QueueHandle_t qh = xQueueCreate(pqd->qu_size, pqd->el_size); 
@@ -80,8 +87,12 @@ void PrepareQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks) {
     }
     pqd->handle = qh;
   }
-
   for (task_desc_t *pt = tasks; pt->task_func != NULL; pt++) {
+ 	  if( (pt->init_func) && !(*pt->init_func)(pt) ) {
+		Serial.print(F("!!! Failed to initialize task: "));
+        Serial.println(pt->name);
+		STOP;
+	  } 
       BaseType_t res = xTaskCreatePinnedToCore(
         pt->task_func,
         pt->name,
@@ -92,15 +103,17 @@ void PrepareQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks) {
         pt->coreid
       );
       if( res != pdPASS) {
-        Serial.print(F("!!! Failed to create task: "));
+        Serial.print(F("!!! Failed to start task: "));
         Serial.println(pt->name);
         STOP;
-      } else {
+	  } else {
         Serial.print(F("Task created: "));
         Serial.println(pt->name);
-      }
+      } 
   }
 }
+
+
 
 bool dispatch_payload(queue_desc_t *queues, TXPAYLOAD *p, BYTE len) {
   pld_type_e pld_type = p->hdr.pld_type;
