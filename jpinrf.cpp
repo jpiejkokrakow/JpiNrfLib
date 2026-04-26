@@ -76,6 +76,7 @@ void SetupQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks) {
   Serial.print(F("sizeof(TXPAYLOAD) = ")); Serial.println(sizeof(TXPAYLOAD));
   Serial.print(F("sizeof(PRTPAYLOAD) = ")); Serial.println(sizeof(PRTPAYLOAD));
   Serial.print(F("sizeof(ACKPAYLOAD) = ")); Serial.println(sizeof(ACKPAYLOAD));
+  Serial.print(F("sizeof(DRVPAYLOAD) = ")); Serial.println(sizeof(DRVPAYLOAD));
   Serial.println("****************/");
 
   for(queue_desc_t *pqd = queues; pqd->name != NULL; pqd++) {
@@ -118,9 +119,12 @@ void SetupQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks) {
 bool dispatch_payload(queue_desc_t *queues, TXPAYLOAD *p, BYTE len) {
   pld_type_e pld_type = p->hdr.pld_type;
 
+  DBSP("--- Dispatcher: "); DBSPLN(pld_type);
   for(queue_desc_t* pqd = queues; pqd->name != NULL; pqd++) {
+	DBSP("------ "); DBSPLN(pqd->name);
     for(pld_type_e *ppt = pqd->pldtypes; *ppt != PLDT_NON; ppt++) {
-      if(*ppt == pld_type && pqd->handle != NULL) {
+	  DBSP("--------- "); DBSPLN(*ppt);
+      if(*ppt == pld_type &&                                                                                  pqd->handle != NULL) {
           if (xQueueSend(pqd->handle, p, portMAX_DELAY) != pdPASS) {
               Serial.print(F("!!! DISPATCHER: Failed to store data into queue:"));
               Serial.println(pqd->name);

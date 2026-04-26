@@ -13,15 +13,18 @@ typedef unsigned long ULONG;
 #define STOP  while(1)
 
 
-#define DEBUG_CODE 1
-#ifdef DEBUG_CODE 
 #define SP(str) Serial.print(str)
 #define SPV(val, base) Serial.print(val, base)
 #define SPLN(str) Serial.println(str)
+
+#ifdef DEBUG_CODE 
+#define DBSP(str) Serial.print(str)
+#define DBSPV(val, base) Serial.print(val, base)
+#define DBSPLN(str) Serial.println(str)
 #else 
-#define SP(str) 
-#define SPV(val, base) 
-#define SPLN(str) 
+#define DBSP(str) 
+#define DBSPV(val, base) 
+#define DBSPLN(str) 
 #endif
 
 
@@ -82,6 +85,13 @@ typedef struct  {
 	LOX_MEASURE lm[MAX_LOX_MEASURES];
 } LOXPAYLOAD;
 
+#define MAX_DRVS 4
+typedef struct  {
+	PLDHEADER hdr;
+	BYTE drv_number;
+	int8_t drv_pct[MAX_DRVS];
+} DRVPAYLOAD;
+
 
 const int max_queue_pld_types = 6;
 typedef struct  {
@@ -119,6 +129,7 @@ extern RF24 radio;
 
 char *getBootReasonString(esp_reset_reason_t reason);
 char *getRangeStatusString(BYTE rangeStatus);
+
 bool nrf_configure(RF24& radio);
 
 void SetupQueuesAndTasks(queue_desc_t *queues, task_desc_t *tasks);
