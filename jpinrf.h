@@ -32,7 +32,7 @@ const rf24_pa_dbm_e nrf_power = RF24_PA_MIN;
 const bool nrf_auto_ack = true;
 const bool nrf_dynamic_payload = true;
 const bool nrf_ack_payload = true;
-const BYTE nrf_channel = 37;
+const BYTE nrf_channel = 111;  // 37
 const rf24_datarate_e nrf_datarate = RF24_1MBPS; 
 
 const uint64_t nrf_addr_telemetry = 0xF0F0F0F0E1LL;
