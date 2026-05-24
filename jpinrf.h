@@ -32,7 +32,7 @@ const rf24_pa_dbm_e nrf_power = RF24_PA_MIN;
 const bool nrf_auto_ack = true;
 const bool nrf_dynamic_payload = true;
 const bool nrf_ack_payload = true;
-const BYTE nrf_channel = 111;  // 37
+const BYTE nrf_channel = 37;  // 37 // 111
 const rf24_datarate_e nrf_datarate = RF24_1MBPS; 
 
 const uint64_t nrf_addr_telemetry = 0xF0F0F0F0E1LL;
@@ -43,7 +43,8 @@ typedef enum _pld_type_enum : uint8_t {
 	PLDT_ACK = 1,
 	PLDT_LOX = 2,
 	PLDT_DRV = 3,
-	PLDT_PRT = 4
+	PLDT_PRT = 4,
+	PLDT_LOXCMD = 5
 	
 } pld_type_e;
 
@@ -91,6 +92,11 @@ typedef struct  {
 	BYTE drv_number;
 	int8_t drv_pct[MAX_DRVS];
 } DRVPAYLOAD;
+
+typedef struct  {
+	PLDHEADER hdr;
+	char sense_config;
+} LOXCMDPAYLOAD;
 
 
 const int max_queue_pld_types = 6;
